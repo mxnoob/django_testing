@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 from pytils.translit import slugify
 
@@ -15,7 +15,7 @@ class TestCreateNote(TestCase):
     def setUpTestData(cls):
         cls.author = User.objects.create(username='Author')
 
-        cls.author_client = cls.client_class()
+        cls.author_client = Client()
         cls.author_client.force_login(cls.author)
 
         cls.add_url = reverse('notes:add')
@@ -54,9 +54,8 @@ class TestCreateNote(TestCase):
 
     def test_not_unique_slug(self):
         """Проверка создания заметки с одинаковым slug."""
-        url = reverse('notes:add')
-        self.author_client.post(url, self.form_data)
-        response = self.author_client.post(url, self.form_data)
+        self.author_client.post(self.add_url, self.form_data)
+        response = self.author_client.post(self.add_url, self.form_data)
         self.assertFormError(
             response, 'form', 'slug', self.form_data['slug'] + WARNING)
         self.assertEqual(Note.objects.count(), 1)
@@ -72,8 +71,8 @@ class TestEditOrDeleteNote(TestCase):
         cls.author = User.objects.create(username='Author')
         cls.reader = User.objects.create(username='Reader')
 
-        cls.author_client = cls.client_class()
-        cls.reader_client = cls.client_class()
+        cls.author_client = Client()
+        cls.reader_client = Client()
 
         cls.author_client.force_login(cls.author)
         cls.reader_client.force_login(cls.reader)

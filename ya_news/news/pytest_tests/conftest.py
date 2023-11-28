@@ -7,20 +7,15 @@ from django.utils import timezone
 
 from news.models import Comment, News
 
+
 COMMENT_TEXT = 'Текст комментария'
 NEW_COMMENT_TEXT = 'Обновлённый комментарий'
-FORM_DATA = {'text': COMMENT_TEXT}
-FORM_DATA_NEW = {'text': NEW_COMMENT_TEXT}
+FORM_DATA = {'text': NEW_COMMENT_TEXT}
 
 
 @pytest.fixture
 def form_data():
     return FORM_DATA
-
-
-@pytest.fixture
-def form_data_new():
-    return FORM_DATA_NEW
 
 
 @pytest.fixture

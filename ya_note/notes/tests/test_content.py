@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 
+from notes.forms import NoteForm
 from notes.models import Note
 
 User = get_user_model()
@@ -15,8 +16,8 @@ class TestContent(TestCase):
         author = User.objects.create(username='Author')
         reader = User.objects.create(username='Reader')
 
-        cls.author_client = cls.client_class()
-        cls.reader_client = cls.client_class()
+        cls.author_client = Client()
+        cls.reader_client = Client()
 
         cls.author_client.force_login(author)
         cls.reader_client.force_login(reader)
@@ -54,3 +55,4 @@ class TestContent(TestCase):
                 url = reverse(name, args=args)
                 response = self.author_client.get(url)
                 self.assertIn('form', response.context)
+                self.assertIsInstance(response.context['form'], NoteForm)

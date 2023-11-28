@@ -52,21 +52,21 @@ def test_user_cant_delete_comment_of_another_user(admin_client, delete_url):
 
 @pytest.mark.django_db
 def test_author_can_edit_comment(
-        comment, author_client, edit_url, url_to_comments, form_data_new
+        comment, author_client, edit_url, url_to_comments, form_data
 ):
     """Автор может редактировать свои комментарии."""
-    response = author_client.post(edit_url, form_data_new)
+    response = author_client.post(edit_url, form_data)
     assertRedirects(response, url_to_comments)
     comment.refresh_from_db()
-    assert comment.text == form_data_new['text']
+    assert comment.text == form_data['text']
 
 
 @pytest.mark.django_db
 def test_user_cant_edit_comment_of_another_user(
-        comment, admin_client, edit_url, form_data_new
+        comment, admin_client, edit_url, form_data
 ):
     """Пользователь не может редактировать комментарий другого пользователя."""
-    admin_client.post(edit_url, form_data_new)
+    admin_client.post(edit_url, form_data)
     comment_text = comment.text
     comment.refresh_from_db()
     assert comment.text == comment_text
