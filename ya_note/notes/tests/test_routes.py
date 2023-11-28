@@ -1,7 +1,8 @@
 from http import HTTPStatus
+
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from django.contrib.auth import get_user_model
 
 from notes.models import Note
 
@@ -14,6 +15,13 @@ class TestRoutes(TestCase):
     def setUpTestData(cls):
         cls.author = User.objects.create(username='Author')
         cls.reader = User.objects.create(username='Reader')
+
+        cls.author_client = cls.client_class()
+        cls.reader_client = cls.client_class()
+
+        cls.author_client.force_login(cls.author)
+        cls.reader_client.force_login(cls.reader)
+
         cls.note = Note.objects.create(
             title='Test',
             text='test text',
@@ -22,6 +30,7 @@ class TestRoutes(TestCase):
         )
 
     def test_pages_availability(self):
+        """Проверка доступности страниц любому пользователя."""
         urls = (
             'notes:home',
             'users:login',
@@ -35,7 +44,21 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
+    def test_availability_for_authorized_client(self):
+        """Проверка страниц для авторизованного пользователя."""
+        urls = (
+            'notes:list',
+            'notes:success',
+            'notes:add',
+        )
+        for name in urls:
+            with self.subTest(name=name):
+                url = reverse(name)
+                response = self.author_client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+
     def test_redirect_for_anonymous_client(self):
+        """Анонимный пользователь перенаправляется на страницу логина."""
         login_url = reverse('users:login')
         urls = (
             ('notes:list', None),
@@ -53,14 +76,17 @@ class TestRoutes(TestCase):
                 self.assertRedirects(response, redirect_url)
 
     def test_availability_for_note_detail_edit_and_delete(self):
+        """
+        Проверка доступности для детального просмотра,
+        редактирования и удаления заметки.
+        """
         users_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.reader, HTTPStatus.NOT_FOUND)
+            (self.author_client, HTTPStatus.OK),
+            (self.reader_client, HTTPStatus.NOT_FOUND)
         )
-        for user, status in users_statuses:
-            self.client.force_login(user)
+        for client, status in users_statuses:
             for name in ('notes:detail', 'notes:edit', 'notes:delete'):
                 with self.subTest(name=name):
                     url = reverse(name, args=(self.note.slug,))
-                    response = self.client.get(url)
+                    response = client.get(url)
                     self.assertEqual(response.status_code, status)

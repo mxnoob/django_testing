@@ -1,11 +1,15 @@
-import pytest
+import re
 
-from django.urls import reverse
+import pytest
 from django.conf import settings
+from django.urls import reverse
+
+from news.forms import CommentForm
 
 
 @pytest.mark.django_db
 def test_news_count(all_news, client):
+    """Проверка количества новостей на главной странице"""
     response = client.get(reverse('news:home'))
     object_list = response.context['object_list']
     news_count = len(object_list)
@@ -14,6 +18,10 @@ def test_news_count(all_news, client):
 
 @pytest.mark.django_db
 def test_new_order(all_news, client):
+    """
+    Проверка сортировки новостей
+    на главной странице от самой свежей к самой старой.
+    """
     response = client.get(reverse('news:home'))
     object_list = response.context['object_list']
     all_dates = [news.date for news in object_list]
@@ -23,12 +31,18 @@ def test_new_order(all_news, client):
 
 @pytest.mark.django_db
 def test_comments_order(few_comment, client, detail_url):
+    """Проверка сортировки комментариев по дате"""
     response = client.get(detail_url)
     assert 'news' in response.context
 
     news = response.context['news']
-    all_comments = news.comment_set.all()
-    assert all_comments[0].created < all_comments[1].created
+    all_comments = news.comment_set.all().order_by('created')
+    sorted_comments = (
+        comment.text for comment in all_comments
+    )
+    comment_pattern = re.compile(r'[\s\S]+?'.join(sorted_comments))
+    page_content = response.content.decode('utf-8')
+    assert re.search(comment_pattern, page_content)
 
 
 @pytest.mark.django_db
@@ -40,5 +54,8 @@ def test_comments_order(few_comment, client, detail_url):
     )
 )
 def test_client_has_form(parametrized_client, expected_result, detail_url):
+    """Проверка наличия формы в контексте для авторизованного пользователя"""
     response = parametrized_client.get(detail_url)
     assert ('form' in response.context) is expected_result
+    if expected_result:
+        assert isinstance(response.context['form'], CommentForm)

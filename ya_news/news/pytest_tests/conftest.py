@@ -1,14 +1,26 @@
-import pytest
-
 from datetime import datetime, timedelta
 
+import pytest
+from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 
-from news.models import News, Comment
-from django.conf import settings
+from news.models import Comment, News
 
 COMMENT_TEXT = 'Текст комментария'
+NEW_COMMENT_TEXT = 'Обновлённый комментарий'
+FORM_DATA = {'text': COMMENT_TEXT}
+FORM_DATA_NEW = {'text': NEW_COMMENT_TEXT}
+
+
+@pytest.fixture
+def form_data():
+    return FORM_DATA
+
+
+@pytest.fixture
+def form_data_new():
+    return FORM_DATA_NEW
 
 
 @pytest.fixture
@@ -46,7 +58,6 @@ def comment(news, author):
 
 @pytest.fixture
 def few_comment(news, author):
-    comments = []
     now = timezone.now()
     for i in range(2):
         comment = Comment.objects.create(
@@ -54,19 +65,16 @@ def few_comment(news, author):
         )
         comment.created = now + timedelta(days=i)
         comment.save()
-        comments.append(comment)
-
-    return comments
 
 
 @pytest.fixture
 def news_id_for_args(news):
-    return news.id,
+    return (news.id,)
 
 
 @pytest.fixture
 def comment_id_for_args(comment):
-    return comment.id,
+    return (comment.id,)
 
 
 @pytest.fixture
