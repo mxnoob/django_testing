@@ -9,8 +9,7 @@ from news.models import Comment, News
 
 
 COMMENT_TEXT = 'Текст комментария'
-NEW_COMMENT_TEXT = 'Обновлённый комментарий'
-FORM_DATA = {'text': NEW_COMMENT_TEXT}
+FORM_DATA = {'text': 'Обновлённый комментарий'}
 
 
 @pytest.fixture
